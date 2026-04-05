@@ -1,17 +1,63 @@
 {
-	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+	"pages": [
 		{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "uni-app"
+				"navigationBarTitleText": "人情账本",
+				"navigationBarBackgroundColor": "#e8392a",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/add/add",
+			"style": {
+				"navigationBarTitleText": "添加记录",
+				"navigationBarBackgroundColor": "#e8392a",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/detail/detail",
+			"style": {
+				"navigationBarTitleText": "往来详情",
+				"navigationBarBackgroundColor": "#e8392a",
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/profile/profile",
+			"style": {
+				"navigationBarTitleText": "我的",
+				"navigationBarBackgroundColor": "#e8392a",
+				"navigationBarTextStyle": "white"
 			}
 		}
 	],
 	"globalStyle": {
-		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "uni-app",
-		"navigationBarBackgroundColor": "#F8F8F8",
-		"backgroundColor": "#F8F8F8"
+		"navigationBarTextStyle": "white",
+		"navigationBarTitleText": "人情账本",
+		"navigationBarBackgroundColor": "#e8392a",
+		"backgroundColor": "#f5f5f5"
+	},
+	"tabBar": {
+		"color": "#999",
+		"selectedColor": "#e8392a",
+		"backgroundColor": "#fff",
+		"borderStyle": "black",
+		"list": [
+			{
+				"pagePath": "pages/index/index",
+				"text": "账本",
+				"iconPath": "static/tab_home.png",
+				"selectedIconPath": "static/tab_home_active.png"
+			},
+			{
+				"pagePath": "pages/profile/profile",
+				"text": "我的",
+				"iconPath": "static/tab_me.png",
+				"selectedIconPath": "static/tab_me_active.png"
+			}
+		]
 	},
 	"uniIdRouter": {}
 }

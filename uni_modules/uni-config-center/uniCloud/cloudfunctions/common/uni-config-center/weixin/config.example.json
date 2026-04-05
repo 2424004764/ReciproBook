@@ -1,0 +1,5 @@
+{
+    // 记得将当前文件名改为config.json
+    "appId": "", // 小程序的appid
+    "appSecret": "" // 小程序的AppSecret
+}

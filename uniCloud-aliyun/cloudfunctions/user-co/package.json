@@ -1,0 +1,13 @@
+{
+  "name": "user-co",
+  "version": "1.0.0",
+  "extensions": {},
+  "dependencies": {
+    "uni-config-center": "file:../../../uni_modules/uni-config-center/uniCloud/cloudfunctions/common/uni-config-center"
+  },
+  "cloudFunctionConfig": {
+    "commonModules": [
+      "uni-config-center"
+    ]
+  }
+}

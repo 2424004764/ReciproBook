@@ -1,17 +1,17 @@
 <script>
-	export default {
-		onLaunch: function() {
-			console.log('App Launch')
-		},
-		onShow: function() {
-			console.log('App Show')
-		},
-		onHide: function() {
-			console.log('App Hide')
-		}
-	}
+import { ensureLogin } from './utils/auth.js'
+
+export default {
+  onLaunch() {
+    // 预热登录，后续所有云对象调用都依赖这个 openid
+    ensureLogin().catch(e => console.error('预热登录失败', e))
+  }
+}
 </script>
 
 <style>
-	/*每个页面公共css */
+page {
+  background-color: #f5f5f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
 </style>

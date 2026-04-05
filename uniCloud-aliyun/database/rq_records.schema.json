@@ -1,0 +1,23 @@
+{
+  "bsonType": "object",
+  "required": ["contactName", "amount", "direction"],
+  "permission": {
+    "read": "doc._openid == auth.openid",
+    "create": "auth.openid != null",
+    "update": "doc._openid == auth.openid",
+    "delete": "doc._openid == auth.openid"
+  },
+  "properties": {
+    "_id": { "description": "记录ID" },
+    "_openid": { "description": "用户openid" },
+    "contactName": { "bsonType": "string", "description": "联系人姓名" },
+    "amount": { "bsonType": "double", "description": "金额" },
+    "direction": { "bsonType": "string", "description": "方向：in=收到 out=送出" },
+    "type": { "bsonType": "string", "description": "类型：红包/礼物/随礼/其他" },
+    "eventTime": { "bsonType": "timestamp", "description": "事件时间" },
+    "occasion": { "bsonType": "string", "description": "场合" },
+    "remark": { "bsonType": "string", "description": "备注" },
+    "createTime": { "bsonType": "timestamp" },
+    "updateTime": { "bsonType": "timestamp" }
+  }
+}
