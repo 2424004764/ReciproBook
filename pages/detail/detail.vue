@@ -82,7 +82,8 @@ export default {
     return {
       name: '',
       records: [],
-      loading: false
+      loading: false,
+      inited: false
     }
   },
   computed: {
@@ -104,7 +105,13 @@ export default {
     }
   },
   onShow() {
-    if (this.name) this.loadRecords()
+    if (!this.name) return
+    const needRefresh = uni.getStorageSync('rq_need_refresh')
+    if (needRefresh) {
+      this.loadRecords()
+    } else if (!this.inited) {
+      // onLoad 已经触发了加载，这里跳过
+    }
   },
   methods: {
     async loadRecords() {
@@ -113,6 +120,7 @@ export default {
       const res = await recordCo.getByContact(this.name)
       if (res.code === 0) this.records = res.data
       this.loading = false
+      this.inited = true
     },
     goEdit(item) {
       uni.navigateTo({ url: `/pages/add/add?id=${item._id}` })

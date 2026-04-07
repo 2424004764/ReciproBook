@@ -1,0 +1,15 @@
+{
+  "bsonType": "object",
+  "permission": {
+    "read": false,
+    "create": true,
+    "update": false,
+    "delete": false
+  },
+  "properties": {
+    "_id": {},
+    "openid": { "bsonType": "string" },
+    "createTime": { "bsonType": "timestamp" },
+    "lastLoginTime": { "bsonType": "timestamp" }
+  }
+}

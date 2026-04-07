@@ -10,17 +10,16 @@ module.exports = {
     if (!this.openid) throw new Error('请先登录')
   },
 
-  // 获取统计数据（收入/支出总额）
+  // 获取统计数据，用两次 count+条件查询代替全量拉取
   async getSummary() {
-    const res = await col.where({ _openid: this.openid }).get()
-    const records = res.data
-    let totalIn = 0   // 收到的（别人给我）
-    let totalOut = 0  // 送出的（我给别人）
-    records.forEach(r => {
-      if (r.direction === 'in') totalIn += r.amount || 0
-      else totalOut += r.amount || 0
-    })
-    return { code: 0, data: { totalIn, totalOut, balance: totalIn - totalOut, count: records.length } }
+    const [inRes, outRes, countRes] = await Promise.all([
+      col.where({ _openid: this.openid, direction: 'in' }).get(),
+      col.where({ _openid: this.openid, direction: 'out' }).get(),
+      col.where({ _openid: this.openid }).count()
+    ])
+    const totalIn = inRes.data.reduce((s, r) => s + (r.amount || 0), 0)
+    const totalOut = outRes.data.reduce((s, r) => s + (r.amount || 0), 0)
+    return { code: 0, data: { totalIn, totalOut, balance: totalIn - totalOut, count: countRes.total } }
   },
 
   // 分页获取记录列表，支持按方向/类型筛选
@@ -41,15 +40,11 @@ module.exports = {
     }
   },
 
-  // 按联系人分组，支持分页，每页20条记录
-  async getContactList({ page = 0 } = {}) {
-    const [listRes, countRes] = await Promise.all([
-      col.where({ _openid: this.openid }).orderBy('eventTime', 'desc').skip(page * PAGE_SIZE).limit(PAGE_SIZE).get(),
-      col.where({ _openid: this.openid }).count()
-    ])
-    // 前端分组聚合
+  // 按联系人聚合统计，不分页（联系人数量有限，全量聚合比分页合并更准确）
+  async getContactList() {
+    const res = await col.where({ _openid: this.openid }).orderBy('eventTime', 'desc').get()
     const map = {}
-    listRes.data.forEach(r => {
+    res.data.forEach(r => {
       const name = r.contactName
       if (!map[name]) {
         map[name] = { contactName: name, totalIn: 0, totalOut: 0, lastTime: r.eventTime }
@@ -59,12 +54,7 @@ module.exports = {
       if (r.eventTime > map[name].lastTime) map[name].lastTime = r.eventTime
     })
     const list = Object.values(map).sort((a, b) => b.lastTime - a.lastTime)
-    return {
-      code: 0,
-      data: list,
-      total: countRes.total,
-      hasMore: listRes.data.length === PAGE_SIZE
-    }
+    return { code: 0, data: list }
   },
 
   // 获取某联系人的所有记录

@@ -69,7 +69,23 @@
           class="record-item"
           @tap="goDetail(item)"
         >
-          <record-card :item="item" />
+          <view class="record-direction" :class="item.direction === 'in' ? 'dir-in' : 'dir-out'">
+            {{ item.direction === 'in' ? '收' : '送' }}
+          </view>
+          <view class="record-body">
+            <view class="record-top">
+              <text class="record-contact">{{ item.contactName }}</text>
+              <text class="record-amount" :class="item.direction === 'in' ? 'amount-in' : 'amount-out'">
+                {{ item.direction === 'in' ? '+' : '-' }}¥{{ formatAmount(item.amount) }}
+              </text>
+            </view>
+            <view class="record-bottom">
+              <text class="record-tag">{{ item.type }}</text>
+              <text v-if="item.occasion" class="record-occasion">{{ item.occasion }}</text>
+              <text class="record-time">{{ formatTime(item.eventTime) }}</text>
+            </view>
+            <text v-if="item.remark" class="record-remark">{{ item.remark }}</text>
+          </view>
         </view>
       </template>
 
@@ -101,8 +117,6 @@
             <text>¥{{ formatAmount(Math.abs(contact.totalIn - contact.totalOut)) }}</text>
           </view>
         </view>
-        <view v-if="contactHasMore" class="load-more">加载中...</view>
-        <view v-if="!contactHasMore && contactList.length > 0" class="no-more">没有更多了</view>
       </template>
       <template v-else>
         <view v-if="recordList.length === 0 && !loading" class="empty">
@@ -161,8 +175,6 @@ export default {
       ],
       activeTab: 'contact',
       contactList: [],
-      contactPage: 0,
-      contactHasMore: false,
       recordList: [],
       searchList: [],
       keyword: '',
@@ -190,41 +202,16 @@ export default {
         await ensureLogin()
         const [summaryRes, contactRes] = await Promise.all([
           recordCo.getSummary(),
-          recordCo.getContactList({ page: 0 })
+          recordCo.getContactList()
         ])
         if (summaryRes.code === 0) this.summary = summaryRes.data
         if (contactRes.code === 0) {
           this.contactList = contactRes.data
-          this.contactPage = 0
-          this.contactHasMore = contactRes.hasMore
         }
         if (this.activeTab === 'timeline') await this.loadTimeline(true)
         this.inited = true
       } catch (e) {
         console.error(e)
-      }
-      this.loading = false
-    },
-    async loadContactMore() {
-      if (!this.contactHasMore || this.loading) return
-      this.loading = true
-      this.contactPage++
-      const res = await recordCo.getContactList({ page: this.contactPage })
-      if (res.code === 0) {
-        // 合并分组：已有联系人累加金额，新联系人追加
-        const map = {}
-        this.contactList.forEach(c => { map[c.contactName] = c })
-        res.data.forEach(c => {
-          if (map[c.contactName]) {
-            map[c.contactName].totalIn += c.totalIn
-            map[c.contactName].totalOut += c.totalOut
-            if (c.lastTime > map[c.contactName].lastTime) map[c.contactName].lastTime = c.lastTime
-          } else {
-            map[c.contactName] = c
-          }
-        })
-        this.contactList = Object.values(map).sort((a, b) => b.lastTime - a.lastTime)
-        this.contactHasMore = res.hasMore
       }
       this.loading = false
     },
@@ -243,13 +230,10 @@ export default {
       }
     },
     async loadMore() {
-      if (this.activeTab === 'contact') {
-        await this.loadContactMore()
-      } else {
-        if (!this.hasMore || this.loading) return
-        this.page++
-        await this.loadTimeline()
-      }
+      if (this.activeTab === 'contact') return  // 联系人视图已全量加载
+      if (!this.hasMore || this.loading) return
+      this.page++
+      await this.loadTimeline()
     },
     async onRefresh() {
       this.refreshing = true

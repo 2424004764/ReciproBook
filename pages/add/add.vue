@@ -220,10 +220,14 @@ export default {
         confirmColor: '#e8392a',
         success: async (res) => {
           if (res.confirm) {
-            await recordCo.remove(this.editId)
-            uni.showToast({ title: '已删除', icon: 'success' })
-            uni.setStorageSync('rq_need_refresh', true)
-            setTimeout(() => uni.navigateBack(), 800)
+            try {
+              await recordCo.remove(this.editId)
+              uni.showToast({ title: '已删除', icon: 'success' })
+              uni.setStorageSync('rq_need_refresh', true)
+              setTimeout(() => uni.navigateBack(), 800)
+            } catch (e) {
+              uni.showToast({ title: '删除失败', icon: 'none' })
+            }
           }
         }
       })
