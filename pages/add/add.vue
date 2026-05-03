@@ -115,7 +115,7 @@
 
 <script>
 import { ensureLogin } from '@/utils/auth.js'
-const recordCo = uniCloud.importObject('record-co')
+import { api } from '@/utils/api.js'
 
 export default {
   data() {
@@ -156,7 +156,7 @@ export default {
       await ensureLogin()
       uni.showLoading({ title: '加载中' })
       try {
-        const res = await recordCo.getOne(id)
+        const res = await api.getOne(id)
         if (res.code === 0) {
           const d = res.data
           this.form = {
@@ -196,14 +196,17 @@ export default {
         await ensureLogin()
         let res
         if (this.isEdit) {
-          res = await recordCo.update({ ...this.form, _id: this.editId, amount: Number(this.form.amount) })
+          res = await api.update({ ...this.form, _id: this.editId, amount: Number(this.form.amount) })
         } else {
-          res = await recordCo.add({ ...this.form, amount: Number(this.form.amount) })
+          res = await api.add({ ...this.form, amount: Number(this.form.amount) })
         }
         if (res.code === 0) {
           uni.showToast({ title: this.isEdit ? '修改成功' : '记录成功', icon: 'success' })
-          // 标记首页需要刷新
+          // 通知详情页联系人名称可能已变更
           uni.setStorageSync('rq_need_refresh', true)
+          if (this.isEdit && this.form.contactName) {
+            uni.setStorageSync('rq_updated_name', this.form.contactName)
+          }
           setTimeout(() => uni.navigateBack(), 1000)
         } else {
           uni.showToast({ title: res.msg || '操作失败', icon: 'none' })
@@ -221,9 +224,10 @@ export default {
         success: async (res) => {
           if (res.confirm) {
             try {
-              await recordCo.remove(this.editId)
+              await api.remove(this.editId)
               uni.showToast({ title: '已删除', icon: 'success' })
               uni.setStorageSync('rq_need_refresh', true)
+              uni.setStorageSync('rq_updated_name', '')
               setTimeout(() => uni.navigateBack(), 800)
             } catch (e) {
               uni.showToast({ title: '删除失败', icon: 'none' })

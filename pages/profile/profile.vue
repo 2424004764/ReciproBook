@@ -57,7 +57,7 @@
 
 <script>
 import { ensureLogin } from '@/utils/auth.js'
-const recordCo = uniCloud.importObject('record-co')
+import { api } from '@/utils/api.js'
 
 export default {
   data() {
@@ -76,7 +76,7 @@ export default {
   methods: {
     async loadSummary() {
       await ensureLogin()
-      const res = await recordCo.getSummary()
+      const res = await api.getSummary()
       if (res.code === 0) this.summary = res.data
     },
     onGetUserInfo(e) {

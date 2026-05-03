@@ -108,8 +108,8 @@
               <text class="contact-time">{{ formatTime(contact.lastTime) }}</text>
             </view>
             <view class="contact-amount-row">
-              <text class="contact-out">送出 ¥{{ formatAmount(contact.totalOut) }}</text>
-              <text class="contact-in">收到 ¥{{ formatAmount(contact.totalIn) }}</text>
+              <text v-if="contact.totalOut > 0" class="contact-out">送出 ¥{{ formatAmount(contact.totalOut) }}</text>
+              <text v-if="contact.totalIn > 0" class="contact-in">收到 ¥{{ formatAmount(contact.totalIn) }}</text>
             </view>
           </view>
           <view class="contact-balance" :class="(contact.totalIn - contact.totalOut) >= 0 ? 'balance-in' : 'balance-out'">
@@ -163,7 +163,7 @@
 
 <script>
 import { ensureLogin } from '@/utils/auth.js'
-const recordCo = uniCloud.importObject('record-co')
+import { api } from '@/utils/api.js'
 
 export default {
   data() {
@@ -201,8 +201,8 @@ export default {
       try {
         await ensureLogin()
         const [summaryRes, contactRes] = await Promise.all([
-          recordCo.getSummary(),
-          recordCo.getContactList()
+          api.getSummary(),
+          api.getContactList()
         ])
         if (summaryRes.code === 0) this.summary = summaryRes.data
         if (contactRes.code === 0) {
@@ -217,7 +217,7 @@ export default {
     },
     async loadTimeline(reset = false) {
       if (reset) { this.page = 0; this.recordList = [] }
-      const res = await recordCo.getList({ page: this.page })
+      const res = await api.getList({ page: this.page })
       if (res.code === 0) {
         this.recordList = reset ? res.data : [...this.recordList, ...res.data]
         this.hasMore = res.hasMore
@@ -245,7 +245,7 @@ export default {
       const kw = this.keyword.trim()
       if (!kw) { this.searchList = []; return }
       this.searchTimer = setTimeout(async () => {
-        const res = await recordCo.search(kw)
+        const res = await api.search(kw)
         if (res.code === 0) this.searchList = res.data
       }, 600)
     },

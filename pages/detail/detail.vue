@@ -75,7 +75,7 @@
 
 <script>
 import { ensureLogin } from '@/utils/auth.js'
-const recordCo = uniCloud.importObject('record-co')
+import { api } from '@/utils/api.js'
 
 export default {
   data() {
@@ -83,7 +83,8 @@ export default {
       name: '',
       records: [],
       loading: false,
-      inited: false
+      inited: false,
+      _refreshed: false
     }
   },
   computed: {
@@ -100,27 +101,71 @@ export default {
   onLoad(options) {
     if (options.name) {
       this.name = decodeURIComponent(options.name)
+      uni.setStorageSync('rq_detail_name', this.name)
       uni.setNavigationBarTitle({ title: this.name + ' 的往来' })
+      // 清除上次编辑留下的名称变更，避免影响新查询
+      uni.removeStorageSync('rq_updated_name')
       this.loadRecords()
     }
   },
   onShow() {
-    if (!this.name) return
+    // 每次显示先清除编辑标记，仅在本次有编辑刷新时才设为 true
+    this._refreshed = false
+    // 页面被回收后状态丢失，从存储恢复联系人名称
+    if (!this.name) {
+      this.name = uni.getStorageSync('rq_detail_name') || ''
+      if (!this.name) return
+      uni.setNavigationBarTitle({ title: this.name + ' 的往来' })
+    }
+    // 从 add 页面保存后，联系人名称可能已变更
+    const updatedName = uni.getStorageSync('rq_updated_name')
+    if (updatedName) {
+      this.name = updatedName
+      uni.setStorageSync('rq_detail_name', updatedName)
+      uni.setNavigationBarTitle({ title: updatedName + ' 的往来' })
+    }
+    uni.removeStorageSync('rq_updated_name')
+    // 从 add 页面保存/删除后返回时触发的刷新
     const needRefresh = uni.getStorageSync('rq_need_refresh')
     if (needRefresh) {
+      uni.removeStorageSync('rq_need_refresh')
+      this._refreshed = true
       this.loadRecords()
-    } else if (!this.inited) {
-      // onLoad 已经触发了加载，这里跳过
+      return
+    }
+    // 页面被回收导致数据丢失且当前没有加载中的请求，重新加载
+    if (this.records.length === 0 && !this.loading) {
+      this.loadRecords()
+    }
+  },
+  onUnload() {
+    // 如果详情页有数据更新，通知首页也刷新
+    if (this._refreshed) {
+      uni.setStorageSync('rq_need_refresh', true)
     }
   },
   methods: {
     async loadRecords() {
       this.loading = true
-      await ensureLogin()
-      const res = await recordCo.getByContact(this.name)
-      if (res.code === 0) this.records = res.data
-      this.loading = false
-      this.inited = true
+      try {
+        await ensureLogin()
+        const res = await api.getByContact(this.name)
+        if (res.code === 0) {
+          this.records = res.data
+          if (res.data.length === 0) {
+            console.warn('getByContact returned empty for:', this.name, 'uid:', uni.getStorageSync('rq_detail_name'))
+          }
+        } else {
+          console.error('加载记录失败 code:', res.code, 'msg:', res.msg, 'name:', this.name)
+          uni.showToast({ title: `加载失败(${res.code})`, icon: 'none' })
+        }
+      } catch (e) {
+        console.error('加载记录异常:', e, 'name:', this.name)
+        uni.showToast({ title: '网络请求失败', icon: 'none' })
+      } finally {
+        this.loading = false
+        this.inited = true
+      }
     },
     goEdit(item) {
       uni.navigateTo({ url: `/pages/add/add?id=${item._id}` })
